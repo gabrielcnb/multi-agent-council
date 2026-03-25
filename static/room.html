@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conselho — AI Council</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg:       #060610;
+  --bg2:      #0c0c1d;
+  --bg3:      #11111f;
+  --border:   rgba(255,255,255,0.07);
+  --border2:  rgba(255,255,255,0.13);
+  --glass:    rgba(255,255,255,0.03);
+  --glass2:   rgba(255,255,255,0.06);
+  --text:     #e2e8f0;
+  --muted:    #4b5563;
+  --dim:      #94a3b8;
+  --claude:   #a855f7;
+  --claude2:  #7c3aed;
+  --gemini:   #3b82f6;
+  --gemini2:  #1d4ed8;
+  --gpt:      #22c55e;
+  --gpt2:     #15803d;
+  --amber:    #f59e0b;
+  --red:      #ef4444;
+  --panel-w:  270px;
+  --bar-h:    46px;
+  --r:        10px;
+}
+
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  display: grid;
+  grid-template-columns: var(--panel-w) 1fr var(--panel-w);
+  grid-template-rows: 1fr var(--bar-h);
+  height: 100vh;
+}
+
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+/* ─── Panels ─── */
+#left, #right {
+  grid-row: 1;
+  background: var(--bg2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+#left  { border-right: 1px solid var(--border); }
+#right { border-left:  1px solid var(--border); }
+
+.panel-header {
+  padding: 14px 14px 11px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  background: var(--bg3);
+}
+.panel-icon {
+  width: 26px; height: 26px;
+  border-radius: 7px;
+  background: var(--glass2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+}
+.panel-title { font-size: 12px; font-weight: 600; }
+.panel-sub   { font-size: 10px; color: var(--muted); margin-left: auto; font-family: 'JetBrains Mono', monospace; }
+
+/* ─── Action log ─── */
+#action-log {
+  flex: 1; overflow-y: auto;
+  padding: 10px 8px;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.action-entry {
+  display: flex; align-items: flex-start; gap: 9px;
+  padding: 7px 9px;
+  border-radius: 8px;
+  background: var(--glass);
+  border: 1px solid var(--border);
+  cursor: default;
+  transition: background 0.15s;
+  animation: slideIn 0.2s ease;
+}
+.action-entry:hover { background: var(--glass2); }
+.action-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--claude);
+  box-shadow: 0 0 5px var(--claude);
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+.action-content { flex: 1; min-width: 0; }
+.action-time { font-size: 10px; color: var(--muted); font-family: 'JetBrains Mono', monospace; margin-bottom: 1px; }
+.action-text { font-size: 12px; color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ─── Conv log ─── */
+#conv-log {
+  flex: 1; overflow-y: auto;
+  padding: 8px 8px;
+  display: flex; flex-direction: column; gap: 5px;
+}
+.log-entry {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 9px 11px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  animation: slideIn 0.25s ease;
+}
+.log-entry:hover { background: var(--glass2); border-color: var(--border2); }
+.log-entry.claude { border-left: 2px solid var(--claude); }
+.log-entry.gemini { border-left: 2px solid var(--gemini); }
+.log-entry.gpt    { border-left: 2px solid var(--gpt); }
+
+.log-who { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.log-dot  { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.log-name { font-size: 12px; font-weight: 600; }
+.log-reply { font-size: 10px; color: var(--muted); }
+.log-time  { margin-left: auto; font-size: 10px; color: var(--muted); font-family: 'JetBrains Mono', monospace; flex-shrink: 0; }
+.log-body {
+  font-size: 12px; color: var(--dim); line-height: 1.6;
+  max-height: 120px; overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+.log-entry.expanded .log-body { max-height: none; }
+.log-entry.expanded .expand-hint { display: none; }
+.expand-hint { font-size: 10px; color: var(--muted); margin-top: 3px; cursor: pointer; }
+.log-entry:not(.expanded) .log-body.clipped::after {
+  content: '';
+  display: block;
+  height: 24px;
+  background: linear-gradient(transparent, var(--bg2));
+  margin-top: -24px;
+  pointer-events: none;
+}
+
+/* Window tag */
+.win-tag {
+  font-size: 9px; font-family: 'JetBrains Mono', monospace;
+  color: var(--muted); background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border); padding: 1px 5px; border-radius: 10px;
+  margin-left: auto; flex-shrink: 0;
+}
+
+/* ─── Center Room ─── */
+#room {
+  grid-row: 1;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg);
+}
+#bg-canvas, #p2p-canvas {
+  position: absolute; inset: 0;
+  pointer-events: none;
+}
+#bg-canvas { z-index: 0; }
+#p2p-canvas { z-index: 8; }
+
+/* radial glow + grid */
+#room::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 55% 45% at 50% 65%, rgba(88,28,135,0.14) 0%, transparent 70%);
+  z-index: 1; pointer-events: none;
+}
+#room::after {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 44px 44px;
+  z-index: 1; pointer-events: none;
+}
+
+/* ─── Badges ─── */
+#round-badge, #parallel-badge {
+  position: absolute;
+  top: 14px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+  padding: 5px 12px; border-radius: 20px;
+  z-index: 20; opacity: 0;
+  transition: opacity 0.3s;
+  backdrop-filter: blur(8px);
+}
+#round-badge {
+  right: 14px;
+  color: var(--amber);
+  background: rgba(245,158,11,0.1);
+  border: 1px solid rgba(245,158,11,0.25);
+}
+#parallel-badge {
+  left: 14px;
+  color: var(--gemini);
+  background: rgba(59,130,246,0.1);
+  border: 1px solid rgba(59,130,246,0.25);
+}
+#round-badge.show    { opacity: 1; }
+#parallel-badge.show { opacity: 1; animation: badgePulse 1.2s ease-in-out infinite; }
+@keyframes badgePulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(59,130,246,0.3); }
+  50%     { box-shadow: 0 0 0 5px rgba(59,130,246,0); }
+}
+
+/* ─── Agents ─── */
+.agent-wrap {
+  position: absolute;
+  bottom: 25%;
+  transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center;
+  z-index: 10;
+  opacity: 0;
+}
+.agent-wrap.entered {
+  opacity: 1;
+  animation: agentEnter 0.9s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+@keyframes agentEnter {
+  from { transform: translateX(-50%) translateY(50px) scale(0.7); opacity: 0; }
+  to   { transform: translateX(-50%) translateY(0) scale(1); opacity: 1; }
+}
+
+/* Bubble */
+.bubble {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 11px;
+  padding: 8px 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text);
+  max-width: 195px; min-width: 60px;
+  margin-bottom: 11px;
+  opacity: 0; pointer-events: none;
+  transform: translateY(5px) scale(0.95);
+  transition: opacity 0.2s, transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  backdrop-filter: blur(10px);
+  word-break: break-word; white-space: pre-wrap;
+  text-align: center; position: relative;
+}
+.bubble.show { opacity: 1; pointer-events: auto; transform: translateY(0) scale(1); }
+.bubble::after {
+  content: '';
+  position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%);
+  width: 11px; height: 6px;
+  background: var(--bg3);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+/* Agent orb */
+.agent-orb-wrap { position: relative; }
+.agent-orb {
+  width: 74px; height: 74px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  transition: transform 0.3s ease;
+}
+/* spinning ring */
+.agent-orb::before {
+  content: '';
+  position: absolute; inset: -3px;
+  border-radius: 50%;
+  background: conic-gradient(var(--oc) 0%, transparent 55%, var(--oc2) 100%);
+  animation: orbSpin 5s linear infinite;
+  opacity: 0.6;
+}
+.agent-orb::after {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  background: var(--bg2);
+  z-index: 0;
+}
+.agent-orb-inner {
+  position: relative; z-index: 1;
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  font-size: 26px; font-weight: 700;
+}
+@keyframes orbSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* idle float */
+.agent-orb-wrap { animation: idleFloat 4s ease-in-out infinite; }
+
+@keyframes idleFloat {
+  0%,100% { transform: translateY(0); }
+  50%      { transform: translateY(-5px); }
+}
+
+/* thinking */
+.agent-wrap.thinking .agent-orb::before { animation: orbSpin 0.7s linear infinite; opacity: 1; }
+.agent-wrap.thinking .agent-orb-wrap    { animation: orbPulse 0.65s ease-in-out infinite alternate; }
+@keyframes orbPulse {
+  from { transform: scale(1); }
+  to   { transform: scale(1.07); filter: brightness(1.25); }
+}
+
+/* think dots */
+.think-dots {
+  position: absolute; top: -30px; left: 50%; transform: translateX(-50%);
+  display: none; gap: 5px; align-items: center;
+}
+.agent-wrap.thinking .think-dots { display: flex; }
+.think-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  animation: dotBounce 0.65s ease-in-out infinite;
+}
+.think-dot:nth-child(2) { animation-delay: 0.15s; }
+.think-dot:nth-child(3) { animation-delay: 0.3s; }
+@keyframes dotBounce {
+  0%,100% { transform: translateY(0); opacity: 0.35; }
+  50%     { transform: translateY(-7px); opacity: 1; }
+}
+
+/* reply tag */
+.reply-tag {
+  font-size: 10px; font-weight: 500;
+  padding: 2px 9px; border-radius: 20px; color: #fff;
+  margin-bottom: 6px; display: none;
+}
+.reply-tag.show { display: block; }
+
+/* vote badge */
+.vote-badge {
+  position: absolute; top: -6px; right: -6px;
+  width: 22px; height: 22px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+  opacity: 0; transform: scale(0.2);
+  transition: opacity 0.3s, transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  z-index: 20;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+}
+.vote-badge.show { opacity: 1; transform: scale(1); }
+
+/* orb shadow */
+.orb-shadow {
+  width: 54px; height: 7px; border-radius: 50%;
+  background: rgba(0,0,0,0.45); filter: blur(4px);
+  margin-top: 4px;
+}
+
+/* agent label */
+.agent-label { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; margin-top: 6px; }
+
+/* jump */
+@keyframes agentJump {
+  0%,100% { transform: translateX(-50%) translateY(0) scale(1); }
+  30%     { transform: translateX(-50%) translateY(-22px) scale(1.08); }
+  65%     { transform: translateX(-50%) translateY(-6px) scale(1.02); }
+}
+.agent-wrap.jumping { animation: agentJump 0.6s cubic-bezier(0.34,1.56,0.64,1); }
+
+/* nod */
+@keyframes nod {
+  0%,100% { transform: rotate(0deg); }
+  25%     { transform: rotate(-6deg); }
+  75%     { transform: rotate(6deg); }
+}
+.agent-orb-wrap.nodding { animation: nod 0.5s ease !important; }
+
+/* speak glow */
+@keyframes speakGlow {
+  0%,100% { filter: none; }
+  50%     { filter: drop-shadow(0 0 18px var(--sg)); }
+}
+.agent-orb-wrap.speaking { animation: speakGlow 0.8s ease !important; }
+
+/* ─── Verdict ─── */
+#verdict-box {
+  position: absolute; bottom: 46%; left: 50%;
+  transform: translateX(-50%) scale(0.88);
+  background: rgba(11,11,25,0.9);
+  border: 1px solid rgba(168,85,247,0.35);
+  border-radius: 14px;
+  padding: 18px 22px;
+  max-width: 400px; width: max-content;
+  z-index: 30; opacity: 0; pointer-events: none;
+  transition: opacity 0.4s, transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: 0 0 50px rgba(168,85,247,0.18), 0 24px 60px rgba(0,0,0,0.6);
+  backdrop-filter: blur(20px);
+  text-align: center;
+}
+#verdict-box.show { opacity: 1; pointer-events: auto; transform: translateX(-50%) scale(1); }
+.verdict-title {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.14em;
+  color: var(--claude); text-transform: uppercase;
+  display: block; margin-bottom: 9px;
+}
+#verdict-text { font-size: 13px; color: var(--text); line-height: 1.65; }
+
+/* ─── Status bar ─── */
+#statusbar {
+  grid-column: 1 / -1; grid-row: 2;
+  background: var(--bg3);
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 16px; gap: 10px;
+}
+.status-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--gpt); flex-shrink: 0;
+  position: relative;
+  transition: background 0.3s;
+}
+.status-dot::after {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: 50%; background: inherit;
+  animation: livePulse 2s ease-in-out infinite;
+}
+@keyframes livePulse {
+  0%,100% { transform: scale(1); opacity: 1; }
+  50%     { transform: scale(2.8); opacity: 0; }
+}
+.status-dot.busy  { background: var(--amber); }
+.status-dot.error { background: var(--red); }
+#status-text { font-size: 12px; color: var(--dim); flex: 1; }
+#sse-badge {
+  font-size: 10px; font-weight: 700; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.06em;
+  color: var(--gpt);
+  background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.28);
+  padding: 3px 9px; border-radius: 20px;
+}
+#sse-badge.off { color: var(--red); background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.28); }
+
+/* ─── Rooms navigator ─── */
+#rooms-nav {
+  position: absolute;
+  bottom: 14px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 6px;
+  z-index: 25; pointer-events: auto;
+  max-width: 80%;
+  flex-wrap: wrap; justify-content: center;
+}
+.room-chip {
+  font-size: 9px; font-family: 'JetBrains Mono', monospace;
+  padding: 3px 9px; border-radius: 20px; cursor: pointer;
+  border: 1px solid var(--border); color: var(--muted);
+  background: rgba(255,255,255,0.04);
+  transition: all 0.15s; white-space: nowrap;
+  backdrop-filter: blur(8px);
+}
+.room-chip:hover  { border-color: var(--amber); color: var(--amber); background: rgba(245,158,11,.08); }
+.room-chip.active { border-color: var(--amber); color: var(--amber); background: rgba(245,158,11,.12); }
+.room-chip .rc-dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--gpt); margin-right: 5px; vertical-align: middle; }
+.room-chip.active .rc-dot { background: var(--amber); box-shadow: 0 0 5px var(--amber); }
+
+/* ─── Session time ─── */
+#session-time {
+  position: absolute;
+  top: 14px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 7px;
+  font-size: 10px; font-family: 'JetBrains Mono', monospace;
+  color: var(--muted);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 11px;
+  z-index: 20;
+  pointer-events: none;
+  backdrop-filter: blur(8px);
+}
+#session-time .st-sep { opacity: 0.4; }
+
+/* ─── Conv-log empty state ─── */
+#conv-empty {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 8px;
+  pointer-events: none;
+}
+#conv-empty .ce-icon { font-size: 22px; animation: emptyBlink 1.8s ease-in-out infinite; }
+#conv-empty .ce-text { font-size: 11px; color: var(--muted); }
+@keyframes emptyBlink {
+  0%,100% { opacity: 0.25; } 50% { opacity: 0.7; }
+}
+
+/* ─── Round separator ─── */
+.round-sep {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 10px; font-family: 'JetBrains Mono', monospace;
+  color: var(--amber); opacity: 0.55;
+  padding: 3px 4px;
+  animation: slideIn 0.25s ease;
+}
+.round-sep::before, .round-sep::after {
+  content: ''; flex: 1; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(245,158,11,0.3), transparent);
+}
+
+/* ─── Misc ─── */
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(9px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes floatUp {
+  0%   { transform: translateY(0) scale(0.8); opacity: 1; }
+  100% { transform: translateY(-85px) scale(1.35); opacity: 0; }
+}
+.float-emoji { position: fixed; font-size: 19px; z-index: 200; pointer-events: none; animation: floatUp 1.2s ease forwards; }
+
+#screen-flash {
+  position: fixed; inset: 0; pointer-events: none; z-index: 998;
+  opacity: 0; transition: opacity 0.09s;
+  background: radial-gradient(ellipse at center, rgba(168,85,247,0.2) 0%, transparent 70%);
+}
+#screen-flash.active { opacity: 1; }
+
+@keyframes confettiFall {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- LEFT: Activity timeline -->
+<div id="left">
+  <div class="panel-header">
+    <div class="panel-icon">⚡</div>
+    <span class="panel-title">Atividade</span>
+    <span class="panel-sub" id="action-count"></span>
+  </div>
+  <div id="action-log">
+    <div class="action-entry">
+      <div class="action-dot" style="background:var(--gpt);box-shadow:0 0 5px var(--gpt)"></div>
+      <div class="action-content">
+        <div class="action-time">Sistema</div>
+        <div class="action-text">Sala pronta</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CENTER: Council chamber -->
+<div id="room">
+  <canvas id="bg-canvas"></canvas>
+  <canvas id="p2p-canvas"></canvas>
+  <div id="session-time">
+    <span id="st-label">Sessão iniciada --:--</span>
+    <span class="st-sep">|</span>
+    <span id="st-elapsed">0:00 min</span>
+  </div>
+  <div id="round-badge">ROUND 1</div>
+  <div id="parallel-badge">⚡ PARALELO</div>
+  <div id="verdict-box">
+    <span class="verdict-title">⚖ Veredito do Conselho</span>
+    <span id="verdict-text"></span>
+  </div>
+  <div id="rooms-nav"></div>
+</div>
+
+<!-- RIGHT: Debate log -->
+<div id="right">
+  <div class="panel-header">
+    <div class="panel-icon">💬</div>
+    <span class="panel-title">Debate</span>
+    <span class="panel-sub" id="conv-count"></span>
+  </div>
+  <div id="conv-log" style="position:relative;">
+    <div id="conv-empty">
+      <div class="ce-icon">💬</div>
+      <div class="ce-text">Aguardando debate...</div>
+    </div>
+  </div>
+</div>
+
+<!-- STATUSBAR -->
+<div id="statusbar">
+  <div class="status-dot" id="status-dot"></div>
+  <span id="status-text">Conectando...</span>
+  <span id="room-info" style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);margin-left:auto;margin-right:8px;"></span>
+  <span id="sse-badge" class="off">LIVE</span>
+</div>
+
+<div id="screen-flash"></div>
+
+<script>
+// ── Agents ──
+const AGENTS = [
+  { key:'claude', name:'Claude', hex:'#a855f7', hex2:'#7c3aed', glyph:'C', x:'20%',
+    bg:'linear-gradient(135deg,#2d0a5e,#1a0533)' },
+  { key:'gemini', name:'Gemini', hex:'#3b82f6', hex2:'#1d4ed8', glyph:'G', x:'50%',
+    bg:'linear-gradient(135deg,#1e3a8a,#0c1a4a)' },
+  { key:'gpt',    name:'GPT',    hex:'#22c55e', hex2:'#15803d', glyph:'✦', x:'80%',
+    bg:'linear-gradient(135deg,#14532d,#052e16)' },
+];
+const agentMap   = Object.fromEntries(AGENTS.map(a => [a.key, a]));
+const agentNames = { claude:'Claude', gemini:'Gemini', gpt:'GPT' };
+
+// ── Canvases ──
+const room      = document.getElementById('room');
+const p2pCanvas = document.getElementById('p2p-canvas');
+const p2pCtx    = p2pCanvas.getContext('2d');
+const bgCanvas  = document.getElementById('bg-canvas');
+const bgCtx     = bgCanvas.getContext('2d');
+
+function resizeCanvases() {
+  p2pCanvas.width = bgCanvas.width  = room.offsetWidth;
+  p2pCanvas.height= bgCanvas.height = room.offsetHeight;
+}
+resizeCanvases();
+window.addEventListener('resize', resizeCanvases);
+
+// ── Particle network ──
+const pts = Array.from({length: 55}, () => ({
+  x: Math.random() * 1500, y: Math.random() * 900,
+  vx: (Math.random()-.5)*.25, vy: (Math.random()-.5)*.25,
+  r: .8 + Math.random() * 1.6,
+  a: .08 + Math.random() * .22,
+  c: ['#a855f7','#3b82f6','#22c55e'][Math.floor(Math.random()*3)],
+}));
+
+function drawBg() {
+  const W = bgCanvas.width, H = bgCanvas.height;
+  bgCtx.clearRect(0, 0, W, H);
+  for (const p of pts) {
+    p.x += p.vx; p.y += p.vy;
+    if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+    if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+  }
+  bgCtx.lineWidth = .5;
+  for (let i = 0; i < pts.length; i++) {
+    for (let j = i+1; j < pts.length; j++) {
+      const dx = pts[i].x-pts[j].x, dy = pts[i].y-pts[j].y;
+      const d = Math.sqrt(dx*dx+dy*dy);
+      if (d < 110) {
+        bgCtx.strokeStyle = `rgba(100,60,200,${(1-d/110)*.06})`;
+        bgCtx.beginPath(); bgCtx.moveTo(pts[i].x,pts[i].y); bgCtx.lineTo(pts[j].x,pts[j].y); bgCtx.stroke();
+      }
+    }
+  }
+  for (const p of pts) {
+    bgCtx.beginPath(); bgCtx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    bgCtx.fillStyle=p.c; bgCtx.globalAlpha=p.a; bgCtx.fill(); bgCtx.globalAlpha=1;
+  }
+  requestAnimationFrame(drawBg);
+}
+drawBg();
+
+// ── Build agent DOM ──
+AGENTS.forEach(a => {
+  const wrap = document.createElement('div');
+  wrap.className = 'agent-wrap';
+  wrap.id = `wrap-${a.key}`;
+  wrap.style.left = a.x;
+  const idleDelays = { claude:'0s', gemini:'1.3s', gpt:'2.6s' };
+  wrap.innerHTML = `
+    <div class="reply-tag" id="reply-${a.key}"></div>
+    <div class="bubble" id="bubble-${a.key}"></div>
+    <div class="agent-orb-wrap" id="ow-${a.key}" style="--sg:${a.hex};animation-delay:${idleDelays[a.key]||'0s'}">
+      <div class="think-dots" id="td-${a.key}">
+        <div class="think-dot" style="background:${a.hex}"></div>
+        <div class="think-dot" style="background:${a.hex}"></div>
+        <div class="think-dot" style="background:${a.hex}"></div>
+      </div>
+      <div class="agent-orb" style="--oc:${a.hex};--oc2:${a.hex2};background:${a.bg}">
+        <div class="agent-orb-inner" style="color:${a.hex}">${a.glyph}</div>
+      </div>
+      <div class="vote-badge" id="vote-${a.key}"></div>
+    </div>
+    <div class="orb-shadow"></div>
+    <div class="agent-label" style="color:${a.hex}">${a.name}</div>
+  `;
+  room.appendChild(wrap);
+});
+
+// ── P2P line ──
+let _p2pT = null;
+function drawP2P(from, to) {
+  if (_p2pT) clearTimeout(_p2pT);
+  const fw = document.getElementById(`wrap-${from}`);
+  const tw = document.getElementById(`wrap-${to}`);
+  if (!fw||!tw) return;
+  const rr=room.getBoundingClientRect(), fr=fw.getBoundingClientRect(), tr=tw.getBoundingClientRect();
+  const x1=fr.left+fr.width/2-rr.left, y1=fr.top+fr.height/2-rr.top;
+  const x2=tr.left+tr.width/2-rr.left, y2=tr.top+tr.height/2-rr.top;
+  p2pCtx.clearRect(0,0,p2pCanvas.width,p2pCanvas.height);
+  const g=p2pCtx.createLinearGradient(x1,y1,x2,y2);
+  g.addColorStop(0, agentMap[from]?.hex||'#fff'); g.addColorStop(1,'transparent');
+  p2pCtx.save();
+  p2pCtx.setLineDash([7,5]); p2pCtx.lineWidth=1.5; p2pCtx.strokeStyle=g; p2pCtx.globalAlpha=.7;
+  p2pCtx.beginPath(); p2pCtx.moveTo(x1,y1); p2pCtx.lineTo(x2,y2); p2pCtx.stroke();
+  const ang=Math.atan2(y2-y1,x2-x1);
+  p2pCtx.setLineDash([]); p2pCtx.globalAlpha=.9; p2pCtx.fillStyle=agentMap[from]?.hex||'#fff';
+  p2pCtx.beginPath(); p2pCtx.moveTo(x2,y2);
+  p2pCtx.lineTo(x2-13*Math.cos(ang-.4),y2-13*Math.sin(ang-.4));
+  p2pCtx.lineTo(x2-13*Math.cos(ang+.4),y2-13*Math.sin(ang+.4));
+  p2pCtx.closePath(); p2pCtx.fill(); p2pCtx.restore();
+  _p2pT = setTimeout(()=>p2pCtx.clearRect(0,0,p2pCanvas.width,p2pCanvas.height),6000);
+}
+
+// ── Helpers ──
+const now = () => new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+// ── Thinking ──
+let _thinking = new Set(), _seenIds = new Set();
+function setThinking(key, val, replyTo) {
+  const w=document.getElementById(`wrap-${key}`); if(!w) return;
+  w.classList.toggle('thinking', val);
+  const rt=document.getElementById(`reply-${key}`);
+  if (rt) {
+    if (val&&replyTo) { rt.textContent=`→ ${agentNames[replyTo]||replyTo}`; rt.style.background=agentMap[replyTo]?.hex||'#888'; rt.classList.add('show'); }
+    else rt.classList.remove('show');
+  }
+  val ? _thinking.add(key) : _thinking.delete(key);
+  document.getElementById('parallel-badge').classList.toggle('show', _thinking.size>=2);
+}
+
+// ── Bubble (typewriter acelerado: max 8ms/char, instantâneo > 80 chars) ──
+const _bT={}, _tT={};
+function showBubble(key, text) {
+  const b=document.getElementById(`bubble-${key}`); if(!b) return;
+  const a=agentMap[key];
+  b.style.borderColor = a?.hex ? a.hex+'3a' : 'var(--border2)';
+  b.style.boxShadow   = a?.hex ? `0 8px 30px rgba(0,0,0,.5),0 0 20px ${a.hex}18` : '';
+  if(_bT[key]) clearTimeout(_bT[key]); if(_tT[key]) clearInterval(_tT[key]);
+  b.classList.add('show'); b.textContent='';
+  const s=(text||'').length>120 ? text.slice(0,119)+'…' : (text||'');
+  if(!s) return;
+  // Textos curtos: typewriter rápido; textos longos: instantâneo
+  if(s.length > 80) {
+    b.textContent = s;
+  } else {
+    let i=0; const d=Math.max(8, 400/s.length);
+    _tT[key]=setInterval(()=>{ b.textContent+=s[i++]; if(i>=s.length){clearInterval(_tT[key]);delete _tT[key];} },d);
+  }
+  _bT[key]=setTimeout(()=>{ b.classList.remove('show'); b.textContent=''; },10000);
+}
+
+// ── Vote ──
+function showVote(key, type) {
+  const badge=document.getElementById(`vote-${key}`); if(!badge) return;
+  const ok=type==='approve';
+  badge.textContent=ok?'✓':'✕';
+  badge.style.background=ok?'rgba(34,197,94,.18)':'rgba(239,68,68,.18)';
+  badge.style.borderColor=ok?'#22c55e':'#ef4444';
+  badge.style.color=ok?'#22c55e':'#ef4444';
+  badge.classList.add('show'); setTimeout(()=>badge.classList.remove('show'),5000);
+}
+
+// ── Left panel ──
+let _aCnt=0;
+function addAction(text) {
+  const log=document.getElementById('action-log'); _aCnt++;
+  const el=document.createElement('div'); el.className='action-entry'; el.title=text||'';
+  el.innerHTML=`<div class="action-dot"></div><div class="action-content"><div class="action-time">${now()}</div><div class="action-text">${(text||'').length>55?text.slice(0,54)+'…':(text||'')}</div></div>`;
+  log.appendChild(el);
+  while(log.children.length>10) log.removeChild(log.firstChild);
+  log.scrollTop=log.scrollHeight;
+  const c=document.getElementById('action-count'); if(c) c.textContent=`${_aCnt} eventos`;
+}
+
+// ── Right panel ──
+let _cCnt=0;
+function addConv(key, name, text, color, replyTo, winTag) {
+  hideEmptyState();
+  const log=document.getElementById('conv-log'); _cCnt++;
+  const a=agentMap[key];
+  const bodyEl = document.createElement('div');
+  bodyEl.className='log-body';
+  bodyEl.textContent = text||'';
+  // Marca como clipped se o conteúdo for longo (sera truncado pelo max-height)
+  if((text||'').length > 200) bodyEl.classList.add('clipped');
+
+  const el=document.createElement('div'); el.className=`log-entry new-msg ${key}`;
+  el.innerHTML=`
+    <div class="log-who">
+      <div class="log-dot" style="background:${a?.hex||color};box-shadow:0 0 5px ${a?.hex||color}"></div>
+      <span class="log-name" style="color:${a?.hex||color}">${name}</span>
+      ${replyTo?`<span class="log-reply">→ ${agentNames[replyTo]||replyTo}</span>`:''}
+      <span class="log-time">${now()}</span>
+      ${winTag?`<span class="win-tag">${winTag}</span>`:''}
+    </div>
+  `;
+  el.appendChild(bodyEl);
+  const hint = document.createElement('div');
+  hint.className='expand-hint'; hint.textContent='▼ ver mais';
+  if((text||'').length > 200) el.appendChild(hint);
+  el.addEventListener('click', ()=>{
+    el.classList.toggle('expanded');
+    hint.textContent = el.classList.contains('expanded') ? '▲ recolher' : '▼ ver mais';
+  });
+  log.appendChild(el);
+  while(log.children.length>30) log.removeChild(log.firstChild);
+  log.scrollTop=log.scrollHeight;
+  const c=document.getElementById('conv-count'); if(c) c.textContent=_cCnt>30?`+${_cCnt-30}`:`${_cCnt} msgs`;
+}
+
+// ── Status & round ──
+function setStatus(text, state='ok') {
+  document.getElementById('status-text').textContent=text;
+  document.getElementById('status-dot').className='status-dot'+(state==='busy'?' busy':state==='error'?' error':'');
+}
+function showRound(n) {
+  const b=document.getElementById('round-badge'); b.textContent=`ROUND ${n}`; b.classList.add('show');
+  setTimeout(()=>b.classList.remove('show'),3500);
+  const log=document.getElementById('conv-log'); if(!log) return;
+  const sep=document.createElement('div'); sep.className='round-sep';
+  sep.textContent=`Round ${n}`; log.appendChild(sep); log.scrollTop=log.scrollHeight;
+}
+
+// ── Jump ──
+function jumpAgent(key) {
+  const w=document.getElementById(`wrap-${key}`); if(!w) return;
+  w.classList.remove('jumping'); void w.offsetWidth; w.classList.add('jumping');
+  setTimeout(()=>w.classList.remove('jumping'),650);
+  const ow=document.getElementById(`ow-${key}`);
+  if(ow){ ow.classList.remove('speaking'); void ow.offsetWidth; ow.classList.add('speaking'); setTimeout(()=>ow.classList.remove('speaking'),850); }
+}
+function nodOthers(key) {
+  AGENTS.forEach(a=>{ if(a.key===key) return;
+    const w=document.getElementById(`wrap-${a.key}`); if(w?.classList.contains('thinking')) return;
+    const ow=document.getElementById(`ow-${a.key}`); if(!ow) return;
+    ow.classList.remove('nodding'); void ow.offsetWidth; ow.classList.add('nodding');
+    setTimeout(()=>ow.classList.remove('nodding'),600);
+  });
+}
+
+// ── Float emoji ──
+const EMOJIS={ response:['💬','✨','💡','🗣️'], thinking:['🤔','⚙️','💭'], vote:['⚖️','👍','👎'], verdict:['⚖️','🔮','✨'] };
+function floatEmoji(key, type='response') {
+  const w=document.getElementById(`wrap-${key}`); if(!w) return;
+  const r=w.getBoundingClientRect();
+  const el=document.createElement('div'); el.className='float-emoji';
+  const list=EMOJIS[type]||EMOJIS.response;
+  el.textContent=list[Math.floor(Math.random()*list.length)];
+  el.style.left=(r.left+r.width/2-9)+'px'; el.style.top=(r.top+12)+'px';
+  document.body.appendChild(el); setTimeout(()=>el.remove(),1300);
+}
+
+// ── Flash ──
+function flashScreen() {
+  const f=document.getElementById('screen-flash'); if(!f) return;
+  f.classList.add('active'); setTimeout(()=>{ f.classList.remove('active');
+    setTimeout(()=>{ f.classList.add('active'); setTimeout(()=>f.classList.remove('active'),120); },260);
+  },120);
+}
+
+// ── Confetti ──
+const CC=['#a855f7','#3b82f6','#22c55e','#f59e0b','#ef4444','#fb923c'];
+function launchConfetti() {
+  for(let i=0;i<65;i++) setTimeout(()=>{
+    const el=document.createElement('div'), s=4+Math.random()*8;
+    el.style.cssText=`position:fixed;left:${Math.random()*100}vw;top:-20px;width:${s}px;height:${s}px;background:${CC[i%CC.length]};z-index:999;pointer-events:none;border-radius:${Math.random()>.5?'50%':'3px'};animation:confettiFall ${1.4+Math.random()*2}s ease forwards;`;
+    document.body.appendChild(el); setTimeout(()=>el.remove(),3500);
+  },i*48);
+}
+
+// ── Audio ──
+let _ac=null;
+const FREQ={ claude:523, gemini:622, gpt:784 }, FREQ2={ claude:659, gemini:784, gpt:988 };
+function getAc() { if(!_ac) _ac=new(window.AudioContext||window.webkitAudioContext)(); if(_ac.state==='suspended') _ac.resume(); return _ac; }
+document.addEventListener('click',()=>{ try{getAc();}catch(e){} },{once:true});
+function playBeep(key, type='response') {
+  try {
+    const ctx=getAc(), t=ctx.currentTime;
+    const fs=type==='verdict'?[FREQ.claude,FREQ2.claude,1047]:[FREQ[key]||440];
+    fs.forEach((f,i)=>{
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.type=type==='thinking'?'sine':'triangle'; o.frequency.value=f;
+      const d=type==='verdict'?.3:type==='thinking'?.08:.15;
+      g.gain.setValueAtTime(.05,t+i*.1); g.gain.exponentialRampToValueAtTime(.001,t+i*.1+d);
+      o.connect(g); g.connect(ctx.destination); o.start(t+i*.1); o.stop(t+i*.1+d);
+    });
+  } catch(e) {}
+}
+
+// ── Session timer ──
+let _sessionStart = Date.now();
+(function initSessionTimer() {
+  const label = document.getElementById('st-label');
+  const elapsed = document.getElementById('st-elapsed');
+  if (label) {
+    const t = new Date(_sessionStart);
+    label.textContent = 'Sessão iniciada ' + t.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  }
+  setInterval(() => {
+    if (!elapsed) return;
+    const s = Math.floor((Date.now() - _sessionStart) / 1000);
+    const m = Math.floor(s / 60), ss = s % 60;
+    elapsed.textContent = `${m}:${String(ss).padStart(2,'0')} min`;
+  }, 1000);
+})();
+
+// ── Empty state ──
+function hideEmptyState() {
+  const e = document.getElementById('conv-empty'); if(e) e.remove();
+}
+
+// ── Round tracking ──
+let _round=0, _rsp=0;
+
+// ── Enter animation ──
+window.addEventListener('load',()=>{ AGENTS.forEach((a,i)=>{ const w=document.getElementById(`wrap-${a.key}`); if(w) setTimeout(()=>w.classList.add('entered'),300+i*200); }); });
+
+// ── SSE handler ──
+function handle(data, silent=false) {
+  if(data._id) {
+    if(_seenIds.has(data._id)) return; _seenIds.add(data._id);
+    if(_seenIds.size>600){ const arr=[..._seenIds]; _seenIds=new Set(arr.slice(-500)); }
+  }
+  const a=agentMap[data.agent];
+  switch(data.type) {
+    case 'thinking':
+      setThinking(data.agent,true,data.replyTo);
+      if(data.replyTo) drawP2P(data.agent,data.replyTo);
+      if(!silent){ playBeep(data.agent,'thinking'); floatEmoji(data.agent,'thinking'); }
+      setStatus(`${a?.name||data.agent} deliberando...`,'busy'); break;
+
+    case 'response': {
+      setThinking(data.agent,false,null);
+      if(!silent){ jumpAgent(data.agent); nodOthers(data.agent); floatEmoji(data.agent,'response'); showBubble(data.agent,data.text); playBeep(data.agent,'response'); }
+      if(a) addConv(a.key,a.name,data.text,a.hex,data.replyTo,data.window);
+      setStatus(`${a?.name||data.agent} pronunciou-se`);
+      if(data.replyTo){ _rsp++; if(_rsp===1){_round++;showRound(_round);} if(_rsp>=2) _rsp=0; }
+      else { _rsp++; if(_rsp<=2) showRound(1); if(_rsp>=2){_rsp=0;_round=1;} }
+      break;
+    }
+
+    case 'vote':
+      if(!silent){ showVote(data.agent,data.vote); floatEmoji(data.agent,'vote'); }
+      if(a){ const lbl=data.vote==='approve'?'aprovou ✓':'rejeitou ✕'; addConv(a.key,a.name,`[${lbl}]${data.reason?' — '+data.reason:''}`,a.hex,null,data.window); }
+      break;
+
+    case 'action':
+      addAction(data.text); setStatus(`Claude: ${(data.text||'').slice(0,50)}`,'busy'); showBubble('claude',data.text); break;
+
+    case 'verdict': {
+      const vb=document.getElementById('verdict-box'), vt=document.getElementById('verdict-text');
+      if(vb&&vt){ vt.textContent=data.text; vb.classList.add('show'); if(vb._h) clearTimeout(vb._h); vb._h=setTimeout(()=>{vb.classList.remove('show');vb._h=null;},14000); }
+      if(!silent){ flashScreen(); playBeep('claude','verdict'); showBubble('claude',data.text); floatEmoji('claude','verdict');
+        setTimeout(()=>AGENTS.forEach(x=>{ const ow=document.getElementById(`ow-${x.key}`); if(ow){ow.classList.remove('nodding');void ow.offsetWidth;ow.classList.add('nodding');setTimeout(()=>ow.classList.remove('nodding'),600);} }),200);
+      }
+      addConv('claude','Claude (Veredito)',data.text,'#a855f7',null,data.window); setStatus('Claude emitiu veredito ⚖'); break;
+    }
+
+    case 'done':
+      AGENTS.forEach(x=>setThinking(x.key,false)); p2pCtx.clearRect(0,0,p2pCanvas.width,p2pCanvas.height);
+      _round=0; _rsp=0; setStatus('Sessão encerrada ✓'); addAction('✓ '+(data.summary||'Tarefa concluída'));
+      if(!silent) launchConfetti(); break;
+
+    case 'connected': setStatus('Sala do Conselho ativa'); break;
+
+    case 'reset':
+      document.getElementById('conv-log').innerHTML='<div id="conv-empty"><div class="ce-icon">💬</div><div class="ce-text">Aguardando debate...</div></div>';
+      _sessionStart = Date.now();
+      { const lbl=document.getElementById('st-label'); if(lbl){ const t=new Date(_sessionStart); lbl.textContent='Sessão iniciada '+t.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); } }
+      document.getElementById('action-log').innerHTML='<div class="action-entry"><div class="action-dot" style="background:var(--gpt);box-shadow:0 0 5px var(--gpt)"></div><div class="action-content"><div class="action-time">Sistema</div><div class="action-text">Sessão reiniciada</div></div></div>';
+      const vb=document.getElementById('verdict-box'); if(vb){if(vb._h){clearTimeout(vb._h);vb._h=null;}vb.classList.remove('show');}
+      p2pCtx.clearRect(0,0,p2pCanvas.width,p2pCanvas.height);
+      _round=0;_rsp=0;_thinking.clear();_cCnt=0;_seenIds.clear();_aCnt=0;
+      document.getElementById('conv-count').textContent=''; document.getElementById('action-count').textContent='';
+      AGENTS.forEach(x=>{ setThinking(x.key,false); const b=document.getElementById(`bubble-${x.key}`); if(b){b.classList.remove('show');b.textContent='';} });
+      setStatus('Nova sessão'); break;
+  }
+}
+
+// ── Sala atual (lida do ?room= na URL) ──
+const _roomId = new URLSearchParams(location.search).get('room') || 'default';
+const _roomSuffix = `?room=${encodeURIComponent(_roomId)}`;
+
+// Mostra nome da sala no título, panel header e status bar
+(function applyRoomLabel() {
+  const projectPart = _roomId.replace(/--w\d+$/, '') || 'default';
+  const winPart     = _roomId.match(/--(\w+)$/)?.[1] || '';
+  const label = projectPart === 'default' ? 'Conselho' : projectPart.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+
+  document.title = `${label}${winPart ? ` · ${winPart}` : ''}`;
+
+  const pt = document.querySelector('.panel-title');
+  const roomBadge = document.createElement('span');
+  roomBadge.style.cssText='font-size:9px;font-family:"JetBrains Mono",monospace;color:var(--amber);background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.25);padding:2px 7px;border-radius:20px;margin-left:6px;';
+  roomBadge.textContent = label;
+  if(pt) pt.parentElement?.querySelector('.panel-title')?.after(roomBadge);
+
+  // badge no #room
+  const rb=document.createElement('div');
+  rb.style.cssText='position:absolute;top:14px;left:50%;transform:translateX(-50%);font-size:10px;font-family:"JetBrains Mono",monospace;color:var(--amber);background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);padding:3px 10px;border-radius:20px;z-index:25;pointer-events:none;backdrop-filter:blur(8px);';
+  rb.id='room-label';
+  rb.textContent = `🏛 ${label}${winPart ? ` · ${winPart}` : ''}`;
+  document.getElementById('room')?.appendChild(rb);
+
+  // status bar: mostra sala + janela
+  const ri = document.getElementById('room-info');
+  if(ri) ri.textContent = winPart ? `${projectPart} · ${winPart}` : projectPart;
+})();
+
+// ── Rooms navigator ──
+function updateRoomsNav(rooms) {
+  const nav = document.getElementById('rooms-nav'); if(!nav) return;
+  nav.innerHTML = '';
+  if(!rooms || rooms.length === 0) return;
+  rooms.forEach(r => {
+    const chip = document.createElement('div');
+    chip.className = 'room-chip' + (r.id === _roomId ? ' active' : '');
+    const dot = `<span class="rc-dot" style="${r.subscribers>0?'background:var(--gpt);box-shadow:0 0 5px var(--gpt)':''}"></span>`;
+    const label = r.id.replace(/--w\d+$/, '').replace(/-/g,' ') || r.id;
+    const winPart = r.id.match(/--(\w+)$/)?.[1] || '';
+    chip.innerHTML = `${dot}${label}${winPart ? ` <span style="opacity:.5;font-size:8px">${winPart}</span>` : ''}`;
+    chip.title = `${r.events} msgs · ${r.idle_min}min idle · ${r.subscribers} conexões`;
+    chip.addEventListener('click', () => {
+      if(r.id !== _roomId) window.location.href = '/?room=' + encodeURIComponent(r.id);
+    });
+    nav.appendChild(chip);
+  });
+}
+
+function fetchRooms() {
+  fetch('/rooms').then(r=>r.json()).then(d=>{
+    if(d.rooms) updateRoomsNav(d.rooms);
+  }).catch(()=>{});
+}
+
+// Atualiza navigator a cada 15s
+fetchRooms();
+setInterval(fetchRooms, 15000);
+
+// ── SSE connect ──
+let _rc=0;
+function connect() {
+  const es=new EventSource('/stream'+_roomSuffix);
+  es.onopen=()=>{
+    _rc=0; setStatus('Sala do Conselho ativa');
+    const b=document.getElementById('sse-badge'); b.textContent='LIVE'; b.className='';
+    if(_cCnt===0) fetch('/report'+_roomSuffix).then(r=>r.json()).then(d=>{ if(d.events?.length) d.events.forEach(e=>handle(e,true)); }).catch(()=>{});
+  };
+  es.onmessage=e=>{ try{handle(JSON.parse(e.data));}catch(err){console.error('SSE:',err);} };
+  es.onerror=()=>{
+    _rc++; const delay=Math.min(2000*_rc,10000);
+    setStatus(`Reconectando... (${_rc})`,'error');
+    const b=document.getElementById('sse-badge'); b.textContent='OFF'; b.className='off';
+    es.close(); setTimeout(connect,delay);
+  };
+}
+connect();
+</script>
+</body>
+</html>

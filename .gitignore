@@ -1,0 +1,24 @@
+# Browser profile (contains session cookies)
+profile/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Database (contains session history)
+council_memory.db
+
+# Logs
+*.log
+room_server.log
+
+# Lock files
+.chrome_lock
+.maintenance_lock
+
+# Environment
+.env
