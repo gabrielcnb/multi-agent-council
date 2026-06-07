@@ -4,16 +4,16 @@ An MCP (Model Context Protocol) server that orchestrates AI debates between mult
 
 ## What it does
 
-Instead of relying on a single AI's opinion, this tool routes questions through multiple models simultaneously via Perplexity Pro, collects their responses, and facilitates structured P2P debates between them. Claude acts as the orchestrator — it calls the council, reads the debate, and makes the final decision.
+Instead of relying on a single AI's opinion, this tool routes questions through multiple models simultaneously via Perplexity Pro, collects their responses, and facilitates structured P2P debates between them. Claude acts as the orchestrator: it calls the council, reads the debate, and makes the final decision.
 
 ### Core features
 
-- **P2P Debates** — GPT and Gemini respond in parallel (Round 1), then react to each other's arguments (Round 2+). Claude synthesizes a verdict.
-- **Code Review** — Both models review code simultaneously, flag bugs/security/style issues. If severity assessments diverge, an automatic Round 2 forces them to reconcile.
-- **Persistent Memory** — SQLite-backed memory with FTS5 full-text search. Past debates and decisions are automatically recalled when relevant topics come up again.
-- **Real-time Dashboard** — A browser-based council room (SSE-powered) shows thinking indicators, responses, votes, and verdicts as they happen. Multiple rooms supported for parallel sessions.
-- **Session Isolation** — Each Claude Code window gets its own room (derived from project directory + PID), so multiple projects can run councils simultaneously.
-- **Maintenance Mode** — Lock mechanism prevents concurrent sessions from conflicting when editing council files.
+- **P2P Debates**: GPT and Gemini respond in parallel (Round 1), then react to each other's arguments (Round 2+). Claude synthesizes a verdict.
+- **Code Review**: Both models review code simultaneously, flag bugs/security/style issues. If severity assessments diverge, an automatic Round 2 forces them to reconcile.
+- **Persistent Memory**: SQLite-backed memory with FTS5 full-text search. Past debates and decisions are recalled when relevant topics come up again.
+- **Real-time Dashboard**: A browser-based council room (SSE-powered) shows thinking indicators, responses, votes, and verdicts as they happen. Multiple rooms supported for parallel sessions.
+- **Session Isolation**: Each Claude Code window gets its own room (derived from project directory + PID), so multiple projects can run councils simultaneously.
+- **Maintenance Mode**: Lock mechanism prevents concurrent sessions from conflicting when editing council files.
 
 ## Architecture
 
@@ -34,7 +34,7 @@ server.py (MCP Server - FastMCP)
 
 ### How it queries models
 
-The key trick: instead of paying for API keys for each model, it uses **Playwright** to maintain a persistent Chromium session logged into Perplexity Pro. Queries are sent via `fetch()` directly in the browser context, hitting Perplexity's internal SSE endpoint. This gives access to GPT-5.4, Gemini 3.1 Pro, Claude Sonnet 4.6, Nemotron, and Sonar — all through a single Perplexity Pro subscription.
+The key trick: instead of paying for API keys for each model, it uses **Playwright** to maintain a persistent Chromium session logged into Perplexity Pro. Queries are sent via `fetch()` directly in the browser context, hitting Perplexity's internal SSE endpoint. This gives access to GPT-5.4, Gemini 3.1 Pro, Claude Sonnet 4.6, Nemotron, and Sonar, all through a single Perplexity Pro subscription.
 
 A cross-process file lock prevents multiple Claude Code windows from racing on the same browser instance.
 
@@ -97,9 +97,9 @@ Add to your `~/.claude/.mcp.json`:
 ### First run
 
 1. Restart Claude Code to load the MCP server
-2. Ask Claude to `convocar_conselho()` — a browser window will open
+2. Ask Claude to `convocar_conselho()` and a browser window will open
 3. Log into Perplexity Pro in that browser window
-4. Close the browser — the session profile is saved in `./profile/`
+4. Close the browser. The session profile is saved in `./profile/`
 5. Future queries will reuse the saved session automatically
 
 ## Dashboard
@@ -121,7 +121,7 @@ The council remembers past debates via SQLite with FTS5 full-text search:
 - **Decisions**: approved choices with attribution
 - **Auto-recall**: When a new debate starts, relevant past sessions are injected into agent prompts
 
-This means the council gets smarter over time — past decisions inform future debates.
+This means the council gets smarter over time: past decisions inform future debates.
 
 ## License
 

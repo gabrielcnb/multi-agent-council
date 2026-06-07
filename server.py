@@ -1,4 +1,4 @@
-"""MCP Server multi-agent — Conselho dos Agentes."""
+"""MCP Server multi-agent: Conselho dos Agentes."""
 
 import asyncio
 import os
@@ -18,7 +18,7 @@ mcp = FastMCP("multi-agent")
 ROOM_URL    = "http://127.0.0.1:8765"
 _SERVER_DIR = Path(__file__).parent
 
-# Arquivo de lock de manutenção — criado quando alguém está editando o conselho
+# Arquivo de lock de manutenção, criado quando alguém está editando o conselho
 _MAINT_LOCK = _SERVER_DIR / ".maintenance_lock"
 
 # Tag único por janela Claude Code (baseado no PID deste processo MCP)
@@ -57,7 +57,7 @@ def _check_maintenance() -> str | None:
         room  = _current_room()
         if owner != room:
             return (
-                f"⚠️  CONSELHO EM MANUTENÇÃO — sala '{owner}' está editando os arquivos do conselho.\n"
+                f"⚠️  CONSELHO EM MANUTENÇÃO: sala '{owner}' está editando os arquivos do conselho.\n"
                 f"Aguarde a manutenção terminar antes de usar as ferramentas.\n"
                 f"(sala atual: '{room}')"
             )
@@ -142,7 +142,7 @@ async def convocar_conselho() -> str:
         f"  Janela: {_WINDOW_TAG}\n"
         f"  URL:    {room_url}\n\n"
         "Agentes presentes: Gemini 3.1 Pro · GPT-5.4\n"
-        "Eu (Claude) sou o orquestrador — executo no seu computador.\n\n"
+        "Eu (Claude) sou o orquestrador: executo no seu computador.\n\n"
         "Ferramentas:\n"
         "  ask_model(question, model)              → consultar Gemini/GPT\n"
         "  debate(topic, rounds)                   → debate P2P\n"
@@ -234,7 +234,7 @@ async def set_maintenance(on: bool) -> str:
 
 @mcp.tool()
 async def debate(topic: str, agents: list = None, rounds: int = 2) -> str:
-    """Debate P2P entre agentes — Round 1 em paralelo, rounds seguintes reagem entre si.
+    """Debate P2P entre agentes. Round 1 em paralelo, rounds seguintes reagem entre si.
 
     agents: ['gemini', 'gpt'] (padrão)
     rounds: número de rodadas (mín 1, recomendado 2)
@@ -282,7 +282,7 @@ async def debate(topic: str, agents: list = None, rounds: int = 2) -> str:
         await _notify({"type": "response", "agent": agent, "text": resp})
         await asyncio.sleep(0.2)
 
-    # ── Rounds 2+: P2P — cada um reage ao outro ──────────────────────────────
+    # ── Rounds 2+: P2P, cada um reage ao outro ──────────────────────────────
     for round_n in range(2, rounds + 1):
         prev_by_agent = {e["agent"]: e for e in transcript if e["round"] == round_n - 1}
         await asyncio.sleep(0.5)
@@ -423,7 +423,7 @@ async def code_review(code: str, context: str = "", file_path: str = "") -> str:
         f"SEVERIDADE: <baixa|média|alta>"
     )
 
-    # Round 1 — paralelo
+    # Round 1: paralelo
     r_gemini, r_gpt = await asyncio.gather(
         _ask_with_retry(review_prompt(MODEL_MAP["gemini"]), "gemini"),
         _ask_with_retry(review_prompt(MODEL_MAP["gpt"]),    "gpt"),
@@ -491,7 +491,7 @@ async def code_review(code: str, context: str = "", file_path: str = "") -> str:
 
 @mcp.tool()
 async def get_report() -> str:
-    """Lê o relatório completo da sessão atual — o que cada agente disse, votos e ações.
+    """Lê o relatório completo da sessão atual: o que cada agente disse, votos e ações.
 
     Use para acompanhar o andamento sem precisar abrir o browser.
     Retorna texto estruturado com toda a atividade registrada.
@@ -545,7 +545,7 @@ async def remember(decision: str, topic: str = "") -> str:
 
 @mcp.tool()
 async def recall_memory(topic: str = "") -> str:
-    """Lê memórias relevantes ao tópico — sessões passadas, decisões, vereditos.
+    """Lê memórias relevantes ao tópico: sessões passadas, decisões, vereditos.
 
     Se topic vazio, mostra as sessões mais recentes.
     """

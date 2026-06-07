@@ -1,4 +1,4 @@
-"""Memória persistente do Conselho — SQLite + injeção seletiva de contexto."""
+"""Memória persistente do Conselho: SQLite + injeção seletiva de contexto."""
 
 import json
 import sqlite3
@@ -148,7 +148,7 @@ def recall(current_topic: str, max_results: int = 4) -> str:
                 ).fetchall()
                 decisions = [dict(r) for r in rows]
             except sqlite3.OperationalError:
-                # FTS query inválida (ex: caracteres especiais) — cai no fallback
+                # FTS query inválida (ex: caracteres especiais), cai no fallback
                 results = []
                 decisions = []
 

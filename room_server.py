@@ -187,7 +187,7 @@ async def room_alias():
 
 
 # ════════════════════════════════════════════════════════════════════════════════
-# ANTIGO HTML EMBUTIDO REMOVIDO — agora servido de static/room.html
+# ANTIGO HTML EMBUTIDO REMOVIDO: agora servido de static/room.html
 # ════════════════════════════════════════════════════════════════════════════════
 _REMOVED_HTML = r"""<!DOCTYPE html>
 <html lang="pt-br">

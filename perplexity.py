@@ -1,4 +1,4 @@
-"""Perplexity Pro — fetch dentro do browser via Playwright (sem automação de UI)."""
+"""Perplexity Pro: fetch dentro do browser via Playwright (sem automação de UI)."""
 
 import asyncio
 import json
@@ -40,7 +40,7 @@ _MODEL_PREF = {
     "nemotron": "nemotron",
 }
 
-# Estado global — Playwright e browser ficam vivos durante toda a sessão
+# Estado global: Playwright e browser ficam vivos durante toda a sessão
 _pw   = None
 _ctx  = None
 _page = None
@@ -79,7 +79,7 @@ def _acquire_file_lock() -> bool:
                 os.kill(other_pid, 0)  # lança se processo morto
                 return False
         except (ValueError, ProcessLookupError, FileNotFoundError):
-            pass  # lock stale — pode sobrescrever
+            pass  # lock stale, pode sobrescrever
         except Exception:
             return False
 
@@ -103,7 +103,7 @@ def _release_file_lock():
 
 def _kill_orphan_chrome():
     """Mata qualquer Chrome Playwright usando o mesmo perfil (orphan de sessão anterior)."""
-    # Usa a parte final do caminho como filtro — ex: "multi-agent\\profile"
+    # Usa a parte final do caminho como filtro (ex: "multi-agent\\profile")
     profile_filter = PROFILE_DIR.name  # "profile"
     try:
         if sys.platform == "win32":
@@ -168,7 +168,7 @@ async def _ensure_page():
     if _page and not _page.is_closed() and _ctx_alive():
         return _page
 
-    # Contexto morreu — limpa tudo e recomeça (inclui matar orphan Chrome)
+    # Contexto morreu: limpa tudo e recomeça (inclui matar orphan Chrome)
     if not _ctx_alive():
         await _reset_all()
 
